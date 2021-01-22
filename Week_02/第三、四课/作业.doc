@@ -1,0 +1,97 @@
+
+Week02 作业题目（周三）：
+
+2.（选做）使用压测工具（wrk 或 sb），演练 gateway-server-0.0.1-SNAPSHOT.jar 示例。
+
+
+　　　　java -jar -Xmx2g -Xms2g -XX:+UseParallelGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps gateway-server-0.0.1-SNAPSHOT.jar
+    
+
+
+
+
+
+
+4.（必做）根据上述自己对于 1 和 2 的演示，写一段对于不同 GC 和堆内存的总结，提交到 GitHub。
+1.SerialGC
+    串行垃圾收集器，单线程精简的GC实现，GC期间必须暂停其他所有的工作线程直到GC结束。无需维护复杂的数据结构，初始化简单，是client模式下JVM默认选项
+特点：CPU利用率最高，停顿时间（用户等待时间）较长。会进入“Stop-TheWorld”状态。
+使用场景：小型应用
+调用参数：-XX:UserSerialGC
+
+2.ParallelGC（ParNewGC、ParScanvengeGC）
+　　并行垃圾收集器，JDK8等版本中默认GC，也称为吞吐量优先GC，算法和SerialGC相似
+特点：老生代和新生代GC并行进行。停顿时间短，回收效率高，对吞吐量要求高。
+使用场景：大型应用，科学计算，大规模数据采集。
+调用参数：XX:+USeParNewGC
+
+3.CMSGC（Concurrent Mark Sweep）
+     采用“标记-清除”算法实现，使用多线程的方法去扫描堆，对发现的未使用的应用进行回收。
+     初始标记--》并发标记--》并发预处理--》重新标记--》并发清除--》并发重置
+特点：相应是按优先，减少垃圾收集停顿时间
+使用场景：服务器，电信等。
+调用参数：-XX:+UseConcMarkSweepGC
+
+4.G1GC
+     堆被划分成许多连续的区域region，采用region棋盘算法，回收时不需要回收整个空间，
+特点：
+　　支持大的堆，高吞吐量
+　　支持多CPU和垃圾回收线程
+　　主线程暂停情况下，使用并行收集
+　　主线程运行情况下，使用并发收集
+实时目标：可配置再N毫秒内最多只占用M毫秒时间进行垃圾收集
+调用参数：–XX:+UseG1GC
+
+
+
+Week02 作业题目（周日）：
+
+
+1.（必做）写一段代码，使用 HttpClient 或 OkHttp 访问 http://localhost:8801 ，代码提交到 GitHub
+
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
+import java.io.IOException;
+
+public class work02 {
+    public static void main(String[] args) {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet("http://localhost:8801/test");
+        CloseableHttpResponse response = null;
+
+        try {
+            response = httpClient.execute(httpGet);
+            if (response.getStatusLine().getStatusCode() == 200) {
+                String content = EntityUtils.toString(response.getEntity(), "UTF-8");
+                System.out.println(content);
+                System.out.println("内容长度：" + content.length());
+            }
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+public class work03 {
+    public static void main(String[] args) throws IOException {
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request request = new Request.Builder().get().url("http://localhost:8801").build();
+
+        Response execute = okHttpClient.newCall(request).execute();
+        if (execute.isSuccessful()){
+            System.out.println(execute.body().string());
+        }
+    }
+}
